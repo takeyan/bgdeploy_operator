@@ -7,5 +7,5 @@ spec:
   green:    takeyan/flask:0.1.1
   port:     5000
   replicas: 1
-  transit:  "OFF"
+  transit:  "ON"
   active:   blue

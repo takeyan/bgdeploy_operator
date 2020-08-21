@@ -4,7 +4,7 @@ import (
         "context"
 
 //      "reflect"
-//        "strings"
+        "strings"
 //        "k8s.io/apimachinery/pkg/labels"
 
         appsv1 "k8s.io/api/apps/v1"            // add for Depoyment
@@ -150,12 +150,12 @@ func (r *ReconcileBGDeploy) Reconcile(request reconcile.Request) (reconcile.Resu
 //      }
 
 
-//              blueImange  := instance.Spec.Blue
-//              greenImage  := instance.Spec.Green
+        blueImage   := instance.Spec.Blue
+        greenImage  := instance.Spec.Green
 //              port        := instance.Spec.Port
 //              replicas    := instance.Spec.Replicas
-//              transitFlag := strings.ToUpper(instance.Spec.Transit)   // ON or OFF
-//              activeApp   := strings.ToUpper(instance.Spec.Active)      // BLUE or GREEN
+        transitFlag := strings.ToUpper(instance.Spec.Transit)   // ON or OFF
+        activeApp   := strings.ToUpper(instance.Spec.Active)      // BLUE or GREEN
 
 //                ctx := context.TODO()
 
@@ -166,63 +166,240 @@ func (r *ReconcileBGDeploy) Reconcile(request reconcile.Request) (reconcile.Resu
 
 
 // Instance Name
-                bgdeploy_pod_envoy  := instance.Name + "-pod-envoy"
-//              bgdeploy_pod_blue   := instance.Name + "-pod-blue"
+        bgdeploy_pod_envoy  := instance.Name + "-pod-envoy"
+//        bgdeploy_pod_blue   := instance.Name + "-pod-blue"
 //              bgdeploy_pod_green  := instance.Name + "-pod-green"
-//              bgdeploy_dep_blue   := instance.Name + "-dep-blue"
-//              bgdeploy_dep_green  := instance.Name + "-dep-green"
-                bgdeploy_svc_xds    := instance.Name + "-svc-xds"
-                bgdeploy_svc_envoy  := instance.Name + "-svc-envoy"
-//              bgdeploy_svc_blue   := instance.Name + "-svc-blue"
-//              bgdeploy_svc_green  := instance.Name + "-svc-green"
+        bgdeploy_dep_blue   := instance.Name + "-dep-blue"
+        bgdeploy_dep_green  := instance.Name + "-dep-green"
+        bgdeploy_svc_xds    := instance.Name + "-svc-xds"
+        bgdeploy_svc_envoy  := instance.Name + "-svc-envoy"
+        bgdeploy_svc_blue   := instance.Name + "-svc-blue"
+        bgdeploy_svc_green  := instance.Name + "-svc-green"
 
 
 // Label
-                l_bgdeploy_pod_envoy  := map[string]string{ "app" : "bgdeploy" , "service" : "envoy" }
-//              l_bgdeploy_pod_blue   := map[string]string{ "app" : "bgdeploy" , "color"   : "blue"  }
+        l_bgdeploy_pod_envoy  := map[string]string{ "app" : "bgdeploy" , "service" : "envoy" }
+//        l_bgdeploy_pod_blue   := map[string]string{ "app" : "bgdeploy" , "color"   : "blue"  }
 //              l_bgdeploy_pod_green  := map[string]string{ "app" : "bgdeploy" , "color"   : "green" }
-//              l_bgdeploy_dep_blue   := map[string]string{ "app" : "bgdeploy" , "color"   : "blue"  }
-//              l_bgdeploy_dep_green  := map[string]string{ "app" : "bgdeploy" , "color"   : "green" }
-                l_bgdeploy_svc_xds    := map[string]string{ "app" : "bgdeploy" , "service" : "xds"   }
-                l_bgdeploy_svc_envoy  := map[string]string{ "app" : "bgdeploy" , "service" : "envoy" }
-//              l_bgdeploy_svc_blue   := map[string]string{ "app" : "bgdeploy" , "color"   : "blue"  }
-//              l_bgdeploy_svc_green  := map[string]string{ "app" : "bgdeploy" , "color"   : "green" }
+        l_bgdeploy_dep_blue   := map[string]string{ "app" : "bgdeploy" , "color"   : "blue"  }
+        l_bgdeploy_dep_green  := map[string]string{ "app" : "bgdeploy" , "color"   : "green" }
+        l_bgdeploy_svc_xds    := map[string]string{ "app" : "bgdeploy" , "service" : "xds"   }
+        l_bgdeploy_svc_envoy  := map[string]string{ "app" : "bgdeploy" , "service" : "envoy" }
+        l_bgdeploy_svc_blue   := map[string]string{ "app" : "bgdeploy" , "color"   : "blue"  }
+        l_bgdeploy_svc_green  := map[string]string{ "app" : "bgdeploy" , "color"   : "green" }
+
+
+// --------------------------
+        podfound := &corev1.Pod{}
+        depfound := &appsv1.Deployment{}
+        svcfound := &corev1.Service{}
+        xdsfound := &corev1.Service{}
 
 
 // Always
 //      bring-up  bgdeploy-pod-envoy, bgdeploy-svc-xds, and bgdeploy-svc-envoy if they are not running there
 
         // Check if the envoy pod already exists, if not create a new one
-                envoyPod := r.newEnvoyPodForCR(instance, bgdeploy_pod_envoy, l_bgdeploy_pod_envoy)
-                podfound := &corev1.Pod{}
-                err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_pod_envoy, Namespace: instance.Namespace}, podfound)
-                if err != nil && errors.IsNotFound(err) {
-                    reqLogger.Info("Creating envoy Pod", "Pod.Namespace", envoyPod.Namespace, "Pod.Name", envoyPod.Name)
-                    err = r.client.Create(context.TODO(), envoyPod)
-                }
+        envoyPod := r.newEnvoyPodForCR(instance, bgdeploy_pod_envoy, l_bgdeploy_pod_envoy)
+//        podfound := &corev1.Pod{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_pod_envoy, Namespace: instance.Namespace}, podfound)
+        if err != nil && errors.IsNotFound(err) {
+            reqLogger.Info("Creating envoy Pod", "Pod.Namespace", envoyPod.Namespace, "Pod.Name", envoyPod.Name)
+            err = r.client.Create(context.TODO(), envoyPod)
+        }
 
 
 
         // Check if the envoy service already exists, if not create a new one
-                envoySvc := r.newEnvoyServiceForCR(instance, bgdeploy_svc_envoy, l_bgdeploy_svc_envoy)
-                svcfound := &corev1.Service{}
-                err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_envoy, Namespace: instance.Namespace}, svcfound)
-                if err != nil && errors.IsNotFound(err) {
-                    reqLogger.Info("Creating envoy Service", "Svc.Namespace", envoySvc.Namespace, "Svc.Name", envoySvc.Name)
-                    err = r.client.Create(context.TODO(), envoySvc)
-                }
+        envoySvc := r.newEnvoyServiceForCR(instance, bgdeploy_svc_envoy, l_bgdeploy_svc_envoy)
+//        svcfound := &corev1.Service{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_envoy, Namespace: instance.Namespace}, svcfound)
+        if err != nil && errors.IsNotFound(err) {
+            reqLogger.Info("Creating envoy Service", "Svc.Namespace", envoySvc.Namespace, "Svc.Name", envoySvc.Name)
+            err = r.client.Create(context.TODO(), envoySvc)
+        }
 
 
 
 
         // Check if the xds service already exists, if not create a new one
-                xdsSvc := r.newXDSServiceForCR(instance, bgdeploy_svc_xds, l_bgdeploy_svc_xds)
-                xdsfound := &corev1.Service{}
-                err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_xds, Namespace: instance.Namespace}, xdsfound)
-                if err != nil && errors.IsNotFound(err) {
-                    reqLogger.Info("Creating xds Service", "Xds.Namespace", envoySvc.Namespace, "Xds.Name", xdsSvc.Name)
-                    err = r.client.Create(context.TODO(), xdsSvc)
-                }
+        xdsSvc := r.newXDSServiceForCR(instance, bgdeploy_svc_xds, l_bgdeploy_svc_xds)
+//        xdsfound := &corev1.Service{}
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_xds, Namespace: instance.Namespace}, xdsfound)
+        if err != nil && errors.IsNotFound(err) {
+            reqLogger.Info("Creating xds Service", "Xds.Namespace", xdsSvc.Namespace, "Xds.Name", xdsSvc.Name)
+            err = r.client.Create(context.TODO(), xdsSvc)
+        }
+
+
+
+
+// IF active==blue && transit==OFF {
+//      bring-up  bgdeploy-dep-blue  and bgdeploy-svc-blue  if they are not running there
+//      terminame bgdeploy-dep-green and bgdeploy-svc-green if they are running there
+//      }
+    if activeApp == "BLUE" && transitFlag == "OFF" {
+
+        // Check if the blue deployment already exists, if not create a new one
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_blue, Namespace: instance.Namespace}, depfound)
+        if err != nil && errors.IsNotFound(err) {
+            // Define a new deployment
+            reqLogger.Info("Defining a new Deployment for: " + bgdeploy_dep_blue)
+            blueDep := r.newBGDeploymentForCR(instance, bgdeploy_dep_blue, blueImage, l_bgdeploy_dep_blue)
+            reqLogger.Info("Creating a App Deployment", "Deployment.Namespace", blueDep.Namespace, "Deployment.Name", blueDep.Name)
+            err = r.client.Create(context.TODO(), blueDep)
+            if err != nil {
+                reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", blueDep.Namespace, "Deployment.Name", blueDep.Name)
+                return reconcile.Result{}, err
+            }
+            // Deployment created successfully - return and requeue
+            return reconcile.Result{Requeue: true}, nil
+        } else if err != nil {
+            reqLogger.Error(err, "Failed to get Deployment")
+            return reconcile.Result{}, err
+        }
+
+
+        // Check if the blue service already exists, if not create a new one
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_blue, Namespace: instance.Namespace}, svcfound)
+        if err != nil && errors.IsNotFound(err) {
+            blueSvc := r.newBGServiceForCR(instance, bgdeploy_svc_blue, l_bgdeploy_svc_blue)
+            reqLogger.Info("Creating xds Service", "Xds.Namespace", blueSvc.Namespace, "Xds.Name", blueSvc.Name)
+            err = r.client.Create(context.TODO(), blueSvc)
+            if err != nil {
+                reqLogger.Error(err, "Failed to create new Service", "Deployment.Namespace", blueSvc.Namespace, "Deployment.Name", blueSvc.Name)
+                return reconcile.Result{}, err
+            }
+            // Deployment created successfully - return and requeue
+            return reconcile.Result{Requeue: true}, nil
+        } else if err != nil {
+            reqLogger.Error(err, "Failed to get Deployment")
+            return reconcile.Result{}, err
+        }
+
+
+        // Check if the green deployment already exists, if yes delete that
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_green, Namespace: instance.Namespace}, depfound)
+        if err != nil && errors.IsNotFound(err) {
+            reqLogger.Info( "Green Deployment not found") 
+        } else  {
+            reqLogger.Info( "Deleting the Deployment")
+            if err := r.client.Delete(context.TODO(), depfound); err != nil { 
+                reqLogger.Error( err, "failed to delete Deployment resource") 
+                return reconcile.Result{}, err
+            }     
+            return reconcile.Result{}, err
+        }
+
+
+        // Check if the green service already exists, if yes delete that
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_green, Namespace: instance.Namespace}, svcfound)
+        if err != nil && errors.IsNotFound(err) {
+            reqLogger.Info( "Green Service not found") 
+                    } else  {
+            reqLogger.Info( "Deleting the Service")
+            if err := r.client.Delete(context.TODO(), svcfound); err != nil { 
+                reqLogger.Error( err, "failed to delete Service resource") 
+                return reconcile.Result{}, err 
+            }     
+            return reconcile.Result{}, err
+        }
+        
+
+
+
+
+    } else if activeApp == "BLUE" && transitFlag == "ON" {
+
+// ELSE IF active==blue && transit==ON  {
+//      bring-up  bgdeploy-dep-blue  and bgdeploy-svc-blue  if they are not running there
+//      bring-up  bgdeploy-dep-green and bgdeploy-svc-green if they are not running there
+//      update XDS snapshot with direction=blue  if the direction is not blue
+//      }
+
+        // Check if the blue deployment already exists, if not create a new one
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_blue, Namespace: instance.Namespace}, depfound)
+        if err != nil && errors.IsNotFound(err) {
+            // Define a new deployment
+            reqLogger.Info("Defining a new Deployment for: " + bgdeploy_dep_blue)
+            blueDep := r.newBGDeploymentForCR(instance, bgdeploy_dep_blue, blueImage, l_bgdeploy_dep_blue)
+            reqLogger.Info("Creating a App Deployment", "Deployment.Namespace", blueDep.Namespace, "Deployment.Name", blueDep.Name)
+            err = r.client.Create(context.TODO(), blueDep)
+            if err != nil {
+                reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", blueDep.Namespace, "Deployment.Name", blueDep.Name)
+                return reconcile.Result{}, err
+            }
+            // Deployment created successfully - return and requeue
+            return reconcile.Result{Requeue: true}, nil
+        } else if err != nil {
+            reqLogger.Error(err, "Failed to get Deployment")
+            return reconcile.Result{}, err
+        }
+
+
+        // Check if the blue service already exists, if not create a new one
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_blue, Namespace: instance.Namespace}, svcfound)
+        if err != nil && errors.IsNotFound(err) {
+            blueSvc := r.newBGServiceForCR(instance, bgdeploy_svc_blue, l_bgdeploy_svc_blue)
+            reqLogger.Info("Creating xds Service", "Xds.Namespace", blueSvc.Namespace, "Xds.Name", blueSvc.Name)
+            err = r.client.Create(context.TODO(), blueSvc)
+            if err != nil {
+                reqLogger.Error(err, "Failed to create new Service", "Deployment.Namespace", blueSvc.Namespace, "Deployment.Name", blueSvc.Name)
+                return reconcile.Result{}, err
+            }
+            // Deployment created successfully - return and requeue
+            return reconcile.Result{Requeue: true}, nil
+        } else if err != nil {
+            reqLogger.Error(err, "Failed to get Deployment")
+            return reconcile.Result{}, err
+        }
+
+
+
+        // Check if the green deployment already exists, if not create a new one
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_green, Namespace: instance.Namespace}, depfound)
+        if err != nil && errors.IsNotFound(err) {
+            // Define a new deployment
+            reqLogger.Info("Defining a new Deployment for: " + bgdeploy_dep_green)
+            greenDep := r.newBGDeploymentForCR(instance, bgdeploy_dep_green, greenImage, l_bgdeploy_dep_green)
+            reqLogger.Info("Creating a App Deployment", "Deployment.Namespace", greenDep.Namespace, "Deployment.Name", greenDep.Name)
+            err = r.client.Create(context.TODO(), greenDep)
+            if err != nil {
+                reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", greenDep.Namespace, "Deployment.Name", greenDep.Name)
+                return reconcile.Result{}, err
+            }
+            // Deployment created successfully - return and requeue
+            return reconcile.Result{Requeue: true}, nil
+        } else if err != nil {
+            reqLogger.Error(err, "Failed to get Deployment")
+            return reconcile.Result{}, err
+        }
+
+
+        // Check if the green service already exists, if not create a new one
+        err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_green, Namespace: instance.Namespace}, svcfound)
+        if err != nil && errors.IsNotFound(err) {
+            greenSvc := r.newBGServiceForCR(instance, bgdeploy_svc_green, l_bgdeploy_svc_green)
+            reqLogger.Info("Creating xds Service", "Xds.Namespace", greenSvc.Namespace, "Xds.Name", greenSvc.Name)
+            err = r.client.Create(context.TODO(), greenSvc)
+            if err != nil {
+                reqLogger.Error(err, "Failed to create new Service", "Deployment.Namespace", greenSvc.Namespace, "Deployment.Name", greenSvc.Name)
+                return reconcile.Result{}, err
+            }
+            // Deployment created successfully - return and requeue
+            return reconcile.Result{Requeue: true}, nil
+        } else if err != nil {
+            reqLogger.Error(err, "Failed to get Deployment")
+            return reconcile.Result{}, err
+        }
+
+        
+
+    }
+
+
+
+
 
 
 
@@ -315,6 +492,80 @@ func (r *ReconcileBGDeploy) Reconcile(request reconcile.Request) (reconcile.Resu
 
 
         }
+
+
+
+
+//     Create Blue or Green Deployment if it isn't there
+// newBGDeploymentForCR returns a busybox pod with the same name/namespace as the cr
+func (r *ReconcileBGDeploy) newBGDeploymentForCR(cr *swallowlabv1alpha1.BGDeploy, dep_name string, image_name string, bg_label map[string]string) *appsv1.Deployment {
+    dep := &appsv1.Deployment{
+        ObjectMeta: metav1.ObjectMeta{
+            Name: dep_name,
+            Namespace: cr.Namespace,
+            Labels: bg_label,
+        },
+        Spec: appsv1.DeploymentSpec{
+            Selector: &metav1.LabelSelector{
+                MatchLabels: bg_label,
+            },
+          Replicas: &cr.Spec.Replicas,
+            Template: corev1.PodTemplateSpec{
+                ObjectMeta: metav1.ObjectMeta{Labels: bg_label },
+                Spec: corev1.PodSpec{
+                    Containers: []corev1.Container{
+                        {
+                            Name: "bgdeploy",
+                           Image: image_name,
+                            Ports: []corev1.ContainerPort{{
+//                                ContainerPort: &cr.Spec.Port,
+                                ContainerPort: 5000,
+                            }},
+                            Env: []corev1.EnvVar{
+                                {
+                                    Name: "K8S_NODE_NAME",
+                                    ValueFrom: &corev1.EnvVarSource{ FieldRef: &corev1.ObjectFieldSelector{ FieldPath: "spec.nodeName" }},
+                              },
+                                {
+                                    Name: "K8S_POD_NAME",
+                                    ValueFrom: &corev1.EnvVarSource{ FieldRef: &corev1.ObjectFieldSelector{ FieldPath: "metadata.name" }},
+                                },
+                                {
+                                    Name: "K8S_POD_IP",
+                                    ValueFrom: &corev1.EnvVarSource{ FieldRef: &corev1.ObjectFieldSelector{ FieldPath: "status.podIP" }},
+                                },
+                            },
+                        },
+                   },
+                },
+            },
+        },
+    }
+    controllerutil.SetControllerReference(cr, dep, r.scheme)
+    return dep
+}
+
+
+//     Create Blue or Green Service if it isn't there
+func (r *ReconcileBGDeploy) newBGServiceForCR(cr *swallowlabv1alpha1.BGDeploy, svc_name string, bg_label map[string]string) *corev1.Service {
+    svc := &corev1.Service{
+        ObjectMeta: metav1.ObjectMeta{
+            Name: svc_name,
+            Namespace: cr.Namespace,
+        },
+        Spec: corev1.ServiceSpec{
+            Ports: []corev1.ServicePort{{
+                Protocol: "TCP",
+                Port: 5000,
+                TargetPort: intstr.FromInt(5000),
+            }},
+            Type: corev1.ServiceTypeNodePort,
+            Selector: bg_label,
+        },
+    }
+    controllerutil.SetControllerReference(cr, svc, r.scheme)
+    return svc
+}
 
 
 
