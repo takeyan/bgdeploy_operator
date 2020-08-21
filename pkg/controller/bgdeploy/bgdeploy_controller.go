@@ -736,7 +736,7 @@ func (r *ReconcileBGDeploy) newBGServiceForCR(cr *swallowlabv1alpha1.BGDeploy, s
 func  (r *ReconcileBGDeploy) newEnvoyPodForCR(cr *swallowlabv1alpha1.BGDeploy, pod_name string, pod_label map[string]string) *corev1.Pod {
 
         configmapvolume := &corev1.ConfigMapVolumeSource{
-                        LocalObjectReference: corev1.LocalObjectReference{Name: cr.Name + "-configmap"},
+                        LocalObjectReference: corev1.LocalObjectReference{Name: pod_name + "-configmap"},
         }
         pod := &corev1.Pod{
                         ObjectMeta: metav1.ObjectMeta{
@@ -747,7 +747,7 @@ func  (r *ReconcileBGDeploy) newEnvoyPodForCR(cr *swallowlabv1alpha1.BGDeploy, p
                         Spec: corev1.PodSpec{
                                         Containers: []corev1.Container{{
                                                                         Name:    "envoy",
-                                                                        Image:   "envoyproxy/envoy:latest",
+                                                                        Image:   "envoyproxy/envoy:v1.15-latest",
                                                                         Command: []string{"/usr/local/bin/envoy"},
                                                                         Args:    []string{"--config-path /etc/envoy/envoy.yaml"},
                                                                         VolumeMounts: []corev1.VolumeMount{{

@@ -1,7 +1,7 @@
 apiVersion: swallowlab.com/v1alpha1
 kind: BGDeploy
 metadata:
-  name: example-bgdeploy
+  name: bgdeploy
 spec:
   blue:     takeyan/flask:0.1.0
   green:    takeyan/flask:0.1.1
