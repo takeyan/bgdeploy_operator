@@ -393,9 +393,170 @@ func (r *ReconcileBGDeploy) Reconcile(request reconcile.Request) (reconcile.Resu
             return reconcile.Result{}, err
         }
 
+    
+
+    } else if activeApp == "GREEN" && transitFlag == "ON" {
+
+// ELSE IF active==green && transit==ON  {
+//      bring-up  bgdeploy-dep-blue  and bgdeploy-svc-blue  if they are not running there
+//      bring-up  bgdeploy-dep-green and bgdeploy-svc-green if they are not running there
+//      update XDS snapshot with direction=green if the direction is not green
+//      }
+
+            // Check if the blue deployment already exists, if not create a new one
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_blue, Namespace: instance.Namespace}, depfound)
+            if err != nil && errors.IsNotFound(err) {
+                // Define a new deployment
+                reqLogger.Info("Defining a new Deployment for: " + bgdeploy_dep_blue)
+                blueDep := r.newBGDeploymentForCR(instance, bgdeploy_dep_blue, blueImage, l_bgdeploy_dep_blue)
+                reqLogger.Info("Creating a App Deployment", "Deployment.Namespace", blueDep.Namespace, "Deployment.Name", blueDep.Name)
+                err = r.client.Create(context.TODO(), blueDep)
+                if err != nil {
+                    reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", blueDep.Namespace, "Deployment.Name", blueDep.Name)
+                    return reconcile.Result{}, err
+                }
+                // Deployment created successfully - return and requeue
+                return reconcile.Result{Requeue: true}, nil
+            } else if err != nil {
+                reqLogger.Error(err, "Failed to get Deployment")
+                return reconcile.Result{}, err
+            }
+        
+        
+            // Check if the blue service already exists, if not create a new one
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_blue, Namespace: instance.Namespace}, svcfound)
+            if err != nil && errors.IsNotFound(err) {
+                blueSvc := r.newBGServiceForCR(instance, bgdeploy_svc_blue, l_bgdeploy_svc_blue)
+                reqLogger.Info("Creating xds Service", "Xds.Namespace", blueSvc.Namespace, "Xds.Name", blueSvc.Name)
+                err = r.client.Create(context.TODO(), blueSvc)
+                if err != nil {
+                    reqLogger.Error(err, "Failed to create new Service", "Deployment.Namespace", blueSvc.Namespace, "Deployment.Name", blueSvc.Name)
+                    return reconcile.Result{}, err
+                }
+                // Deployment created successfully - return and requeue
+                return reconcile.Result{Requeue: true}, nil
+            } else if err != nil {
+                reqLogger.Error(err, "Failed to get Deployment")
+                return reconcile.Result{}, err
+            }
+        
+        
+        
+            // Check if the green deployment already exists, if not create a new one
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_green, Namespace: instance.Namespace}, depfound)
+            if err != nil && errors.IsNotFound(err) {
+                // Define a new deployment
+                reqLogger.Info("Defining a new Deployment for: " + bgdeploy_dep_green)
+                greenDep := r.newBGDeploymentForCR(instance, bgdeploy_dep_green, greenImage, l_bgdeploy_dep_green)
+                reqLogger.Info("Creating a App Deployment", "Deployment.Namespace", greenDep.Namespace, "Deployment.Name", greenDep.Name)
+                err = r.client.Create(context.TODO(), greenDep)
+                if err != nil {
+                    reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", greenDep.Namespace, "Deployment.Name", greenDep.Name)
+                    return reconcile.Result{}, err
+                }
+                // Deployment created successfully - return and requeue
+                return reconcile.Result{Requeue: true}, nil
+            } else if err != nil {
+                reqLogger.Error(err, "Failed to get Deployment")
+                return reconcile.Result{}, err
+            }
+        
+        
+            // Check if the green service already exists, if not create a new one
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_green, Namespace: instance.Namespace}, svcfound)
+            if err != nil && errors.IsNotFound(err) {
+                greenSvc := r.newBGServiceForCR(instance, bgdeploy_svc_green, l_bgdeploy_svc_green)
+                reqLogger.Info("Creating xds Service", "Xds.Namespace", greenSvc.Namespace, "Xds.Name", greenSvc.Name)
+                err = r.client.Create(context.TODO(), greenSvc)
+                if err != nil {
+                    reqLogger.Error(err, "Failed to create new Service", "Deployment.Namespace", greenSvc.Namespace, "Deployment.Name", greenSvc.Name)
+                    return reconcile.Result{}, err
+                }
+                // Deployment created successfully - return and requeue
+                return reconcile.Result{Requeue: true}, nil
+            } else if err != nil {
+                reqLogger.Error(err, "Failed to get Deployment")
+                return reconcile.Result{}, err
+            }
+        
         
 
-    }
+        } else if activeApp == "GREEN" && transitFlag == "OFF" {
+
+// ELSE IF active==green && transit==OFF {
+//      terminate bgdeploy-dep-blue  and bgdeploy-svc-blue  if they are not running there
+//      bring-up  bgdeploy-dep-green and bgdeploy-svc-green if they are not running there
+//      }
+
+            // Check if the green deployment already exists, if not create a new one
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_green, Namespace: instance.Namespace}, depfound)
+            if err != nil && errors.IsNotFound(err) {
+                // Define a new deployment
+                reqLogger.Info("Defining a new Deployment for: " + bgdeploy_dep_green)
+                greenDep := r.newBGDeploymentForCR(instance, bgdeploy_dep_green, greenImage, l_bgdeploy_dep_green)
+                reqLogger.Info("Creating a App Deployment", "Deployment.Namespace", greenDep.Namespace, "Deployment.Name", greenDep.Name)
+                err = r.client.Create(context.TODO(), greenDep)
+                if err != nil {
+                    reqLogger.Error(err, "Failed to create new Deployment", "Deployment.Namespace", greenDep.Namespace, "Deployment.Name", greenDep.Name)
+                    return reconcile.Result{}, err
+                }
+                // Deployment created successfully - return and requeue
+                return reconcile.Result{Requeue: true}, nil
+            } else if err != nil {
+                reqLogger.Error(err, "Failed to get Deployment")
+                return reconcile.Result{}, err
+            }
+        
+        
+            // Check if the green service already exists, if not create a new one
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_green, Namespace: instance.Namespace}, svcfound)
+            if err != nil && errors.IsNotFound(err) {
+                greenSvc := r.newBGServiceForCR(instance, bgdeploy_svc_green, l_bgdeploy_svc_green)
+                reqLogger.Info("Creating xds Service", "Xds.Namespace", greenSvc.Namespace, "Xds.Name", greenSvc.Name)
+                err = r.client.Create(context.TODO(), greenSvc)
+                if err != nil {
+                    reqLogger.Error(err, "Failed to create new Service", "Deployment.Namespace", greenSvc.Namespace, "Deployment.Name", greenSvc.Name)
+                    return reconcile.Result{}, err
+                }
+                // Deployment created successfully - return and requeue
+                return reconcile.Result{Requeue: true}, nil
+            } else if err != nil {
+                reqLogger.Error(err, "Failed to get Deployment")
+                return reconcile.Result{}, err
+            }
+        
+        
+            // Check if the blue deployment already exists, if yes delete that
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_dep_blue, Namespace: instance.Namespace}, depfound)
+            if err != nil && errors.IsNotFound(err) {
+                reqLogger.Info( "Blue Deployment not found") 
+            } else  {
+                reqLogger.Info( "Deleting the Deployment")
+                if err := r.client.Delete(context.TODO(), depfound); err != nil { 
+                    reqLogger.Error( err, "failed to delete Deployment resource") 
+                    return reconcile.Result{}, err
+                }     
+                return reconcile.Result{}, err
+            }
+        
+        
+            // Check if the blue service already exists, if yes delete that
+            err = r.client.Get(context.TODO(), types.NamespacedName{Name: bgdeploy_svc_blue, Namespace: instance.Namespace}, svcfound)
+            if err != nil && errors.IsNotFound(err) {
+                reqLogger.Info( "Blue Service not found") 
+                        } else  {
+                reqLogger.Info( "Deleting the Service")
+                if err := r.client.Delete(context.TODO(), svcfound); err != nil { 
+                    reqLogger.Error( err, "failed to delete Service resource") 
+                    return reconcile.Result{}, err 
+                }     
+                return reconcile.Result{}, err
+            }
+                        
+        
+        }            
+
+
 
 
 
